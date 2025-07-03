@@ -1,581 +1,547 @@
-# About
+# File Preview Service (Go)
 
-filepreview : A file preview generator for node.js
+A high-performance file preview generator service written in Go, designed to replace Node.js filepreview with better cloud compatibility and Laravel integration.
 
-Will generate a file preview (gif, jpg or png) of about 450 different document formats.
+## Overview
 
-See filepreview in action, watch this demo using Angular : https://vimeo.com/151667833
+This service generates image previews (thumbnails) for various file formats including:
+- **Images**: JPG, PNG, GIF, BMP, TIFF, SVG, WebP, PSD, RAW formats, etc.
+- **Videos**: MP4, AVI, MOV, WMV, FLV, WebM, MKV, etc.
+- **Documents**: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ODT, etc.
 
-## Installation
+**Output formats**: JPG, PNG, GIF
 
-filepreview depends on 'unoconv':
+## Features
 
+- ✅ **REST API** - Easy integration with any web framework
+- ✅ **Laravel Compatible** - CORS-enabled for seamless Laravel integration
+- ✅ **Cloud Ready** - Docker support and environment-based configuration
+- ✅ **URL Support** - Generate previews from remote URLs
+- ✅ **Customizable** - Width, height, quality, and timing options
+- ✅ **High Performance** - Go's concurrency and speed
+- ✅ **Health Checks** - Built-in health monitoring endpoint
+
+## Quick Start
+
+### Prerequisites
+
+Install required system dependencies:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install -y unoconv ffmpeg imagemagick curl
+
+# CentOS/RHEL
+sudo yum install -y unoconv ffmpeg ImageMagick curl
+
+# macOS
+brew install unoconv ffmpeg imagemagick
 ```
-  $ apt-get install unoconv
+
+### Installation
+
+1. **Clone and build:**
+```bash
+git clone <repository-url>
+cd filepreview-go
+go mod tidy
+go build -o filepreview-service
 ```
 
-filepreview depends on 'ffmpeg':
-
-
-```
-  $ apt-get install ffmpeg
+2. **Run the service:**
+```bash
+./filepreview-service
 ```
 
-filepreview depends on 'ImageMagick':
+The service will start on port 8080 by default.
 
-```
-  $ apt-get install imagemagick
-```
+### Docker Deployment
 
+```bash
+# Build the Docker image
+docker build -t filepreview-go .
 
-filepreview depends on 'curl':
-
-```
-  $ apt-get install curl
-```
-
-To install use npm:
-
-```
-  $ npm install filepreview
+# Run the container
+docker run -p 8080:8080 filepreview-go
 ```
 
-## Usage
+## API Documentation
 
-Asynchronous with callback (if error, will return error in the callback) :
+### Base URL
+```
+http://localhost:8080/api/v1
+```
 
-```javascript
-  var filepreview = require('filepreview');
+### Endpoints
 
-  filepreview.generate('/home/myfile.docx', '/home/myfile_preview.gif', function(error) {
-    if (error) {
-      return console.log(error);
+#### 1. Generate Preview from Local File
+
+**POST** `/api/v1/generate`
+
+```json
+{
+  "input_path": "/path/to/input/file.pdf",
+  "output_path": "/path/to/output/thumbnail.jpg",
+  "options": {
+    "width": 640,
+    "height": 480,
+    "quality": 90,
+    "preview_time": "00:03:00.000"
+  }
+}
+```
+
+#### 2. Generate Preview from URL
+
+**POST** `/api/v1/generate-from-url`
+
+```json
+{
+  "url": "https://example.com/document.pdf",
+  "output_path": "/path/to/output/thumbnail.jpg",
+  "options": {
+    "width": 640,
+    "height": 480,
+    "quality": 90
+  }
+}
+```
+
+#### 3. Get Supported Formats
+
+**GET** `/api/v1/formats`
+
+Returns list of supported input and output formats.
+
+#### 4. Health Check
+
+**GET** `/health`
+
+Returns service health status.
+
+### Request Options
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `width` | integer | Output width in pixels | Original |
+| `height` | integer | Output height in pixels | Original |
+| `quality` | integer | Output quality (1-100) | 75 |
+| `preview_time` | string | Video timestamp (HH:MM:SS.mmm) | 00:00:01 |
+
+### Response Format
+
+```json
+{
+  "success": true,
+  "message": "Preview generated successfully",
+  "output_path": "/path/to/output/thumbnail.jpg"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Error description"
+}
+```
+
+## Laravel Integration
+
+### 1. Create Laravel Service Class
+
+```php
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class FilePreviewService
+{
+    private string $baseUrl;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('services.filepreview.url', 'http://localhost:8080/api/v1');
     }
-    console.log('File preview is /home/myfile_preview.gif');
-  });
 
+    /**
+     * Generate preview from local file
+     */
+    public function generatePreview(string $inputPath, string $outputPath, array $options = []): bool
+    {
+        try {
+            $response = Http::timeout(60)->post("{$this->baseUrl}/generate", [
+                'input_path' => $inputPath,
+                'output_path' => $outputPath,
+                'options' => $options
+            ]);
+
+            return $response->successful() && $response->json('success', false);
+        } catch (\Exception $e) {
+            Log::error('File preview generation failed', [
+                'input' => $inputPath,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Generate preview from URL
+     */
+    public function generatePreviewFromUrl(string $url, string $outputPath, array $options = []): bool
+    {
+        try {
+            $response = Http::timeout(60)->post("{$this->baseUrl}/generate-from-url", [
+                'url' => $url,
+                'output_path' => $outputPath,
+                'options' => $options
+            ]);
+
+            return $response->successful() && $response->json('success', false);
+        } catch (\Exception $e) {
+            Log::error('File preview generation from URL failed', [
+                'url' => $url,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Get supported formats
+     */
+    public function getSupportedFormats(): array
+    {
+        try {
+            $response = Http::get("{$this->baseUrl}/formats");
+            return $response->successful() ? $response->json('formats', []) : [];
+        } catch (\Exception $e) {
+            Log::error('Failed to get supported formats', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+}
 ```
 
-Synchronous (if error, will return false):
+### 2. Laravel Configuration
 
+Add to `config/services.php`:
+
+```php
+'filepreview' => [
+    'url' => env('FILEPREVIEW_SERVICE_URL', 'http://localhost:8080/api/v1'),
+],
+```
+
+Add to `.env`:
+
+```env
+FILEPREVIEW_SERVICE_URL=http://your-go-service:8080/api/v1
+```
+
+### 3. Laravel Controller Example
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\FilePreviewService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+class DocumentController extends Controller
+{
+    private FilePreviewService $previewService;
+
+    public function __construct(FilePreviewService $previewService)
+    {
+        $this->previewService = $previewService;
+    }
+
+    public function uploadAndPreview(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|max:10240', // 10MB max
+        ]);
+
+        $file = $request->file('file');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $inputPath = $file->storeAs('documents', $filename, 'public');
+        $outputPath = Storage::path('public/thumbnails/' . pathinfo($filename, PATHINFO_FILENAME) . '.jpg');
+
+        // Ensure thumbnail directory exists
+        Storage::makeDirectory('public/thumbnails');
+
+        // Generate preview
+        $success = $this->previewService->generatePreview(
+            Storage::path('public/' . $inputPath),
+            $outputPath,
+            [
+                'width' => 300,
+                'height' => 200,
+                'quality' => 85
+            ]
+        );
+
+        if ($success) {
+            return response()->json([
+                'success' => true,
+                'file_url' => Storage::url($inputPath),
+                'thumbnail_url' => Storage::url('thumbnails/' . pathinfo($filename, PATHINFO_FILENAME) . '.jpg')
+            ]);
+        }
+
+        return response()->json(['success' => false, 'error' => 'Preview generation failed'], 500);
+    }
+}
+```
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Service port | 8080 |
+| `GIN_MODE` | Gin framework mode (debug/release) | release |
+
+## Docker Configuration
+
+### Dockerfile
+
+```dockerfile
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN go build -o filepreview-service .
+
+FROM alpine:latest
+
+# Install system dependencies
+RUN apk add --no-cache \
+    unoconv \
+    ffmpeg \
+    imagemagick \
+    curl \
+    libreoffice
+
+WORKDIR /app
+COPY --from=builder /app/filepreview-service .
+
+EXPOSE 8080
+
+CMD ["./filepreview-service"]
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+
+services:
+  filepreview:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - GIN_MODE=release
+      - PORT=8080
+    volumes:
+      - ./uploads:/app/uploads
+      - ./thumbnails:/app/thumbnails
+    restart: unless-stopped
+
+  # Optional: Add Redis for caching
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+```
+
+## Cloud Deployment
+
+### AWS ECS
+
+1. **Build and push to ECR:**
+```bash
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin <account>.dkr.ecr.us-west-2.amazonaws.com
+docker build -t filepreview-go .
+docker tag filepreview-go:latest <account>.dkr.ecr.us-west-2.amazonaws.com/filepreview-go:latest
+docker push <account>.dkr.ecr.us-west-2.amazonaws.com/filepreview-go:latest
+```
+
+2. **ECS Task Definition:**
+```json
+{
+  "family": "filepreview-go",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "filepreview",
+      "image": "<account>.dkr.ecr.us-west-2.amazonaws.com/filepreview-go:latest",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "GIN_MODE",
+          "value": "release"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Kubernetes
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: filepreview-go
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: filepreview-go
+  template:
+    metadata:
+      labels:
+        app: filepreview-go
+    spec:
+      containers:
+      - name: filepreview
+        image: your-registry/filepreview-go:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GIN_MODE
+          value: "release"
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: filepreview-service
+spec:
+  selector:
+    app: filepreview-go
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
+```
+
+## Performance Considerations
+
+- **Concurrency**: Go handles concurrent requests efficiently
+- **Memory**: Large files are processed in chunks to minimize memory usage
+- **Temporary Files**: Automatic cleanup of temporary files
+- **Timeouts**: Configure appropriate timeouts for large file processing
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"unoconv failed" error**: Ensure LibreOffice is installed and unoconv is in PATH
+2. **"ffmpeg failed" error**: Verify ffmpeg installation and codec support
+3. **"convert failed" error**: Check ImageMagick installation and policies
+4. **Permission errors**: Ensure write permissions for output directories
+
+### Debugging
+
+Enable debug mode:
+```bash
+GIN_MODE=debug ./filepreview-service
+```
+
+### Health Check
+
+```bash
+curl http://localhost:8080/health
+```
+
+## Migration from Node.js filepreview
+
+### API Differences
+
+| Node.js | Go Service | Notes |
+|---------|------------|-------|
+| `filepreview.generate()` | `POST /api/v1/generate` | Now HTTP-based |
+| `filepreview.generateSync()` | Same endpoint | All operations are async |
+| Callback-based | HTTP response | Standard REST API |
+
+### Code Migration Example
+
+**Before (Node.js):**
 ```javascript
-  var filepreview = require('filepreview');
+var filepreview = require('filepreview');
 
-  if (!filepreview.generateSync('/home/myfile.docx', '/home/myfile_preview.gif')) {
-    console.log('Oops, something went wrong.');
-  } else {
-    console.log('File preview is /home/myfile_preview.gif');
-  };
-
+filepreview.generate('/home/myfile.docx', '/home/myfile_preview.gif', function(error) {
+  if (error) {
+    return console.log(error);
+  }
+  console.log('File preview is /home/myfile_preview.gif');
+});
 ```
 
-You can specify a url instead of a file path, ie: http://www.myfile.com/my_file.doc, and filepreview will download it to generate its preview.
+**After (Laravel with Go service):**
+```php
+$previewService = new FilePreviewService();
+$success = $previewService->generatePreview(
+    '/home/myfile.docx',
+    '/home/myfile_preview.gif'
+);
 
-You can set options object for the preview generation. List of options available:-
-* width
-* height
-* quality [see quality documentation](https://www.imagemagick.org/script/command-line-options.php#quality)
-* previewTime
-
-e.g. Document/Image
-```javascript
-var options = {
-  width: 640,
-  height: 480,
-  quality: 90
-};
-
-e.g. Video
-```javascript
-var options = {
-  width: 640,
-  height: 480,
-  quality: 90,
-  previewTime: '00:03:00.000'
-};
-
-// Asynchronous
-filepreview.generate('/home/myfile.docx', '/home/myfile_preview.gif', options, function(error) {...});
-
-// Synchronous
-filepreview.generateSync('/home/myfile.docx', '/home/myfile_preview.gif', options);
+if ($success) {
+    echo 'File preview is /home/myfile_preview.gif';
+} else {
+    echo 'Preview generation failed';
+}
 ```
 
-To be more stable, you can run `unoconv` as [listener](https://github.com/dagwieers/unoconv#start-your-own-unoconv-listener) before running the file preview generation.
-```
-$ unoconv --listener
-$ node script_with_file_preview_generations.js
-```
+## Contributing
 
-## Document formats
-
-The following list of document formats are currently available for exporting to:
--  bib      - BibTeX [.bib]
--  doc      - Microsoft Word 97/2000/XP [.doc]
--  doc6     - Microsoft Word 6.0 [.doc]
--  doc95    - Microsoft Word 95 [.doc]
--  docbook  - DocBook [.xml]
--  html     - HTML Document (OpenOffice.org Writer) [.html]
--  odt      - Open Document Text [.odt]
--  ott      - Open Document Text [.ott]
--  ooxml    - Microsoft Office Open XML [.xml]
--  pdb      - AportisDoc (Palm) [.pdb]
--  pdf      - Portable Document Format [.pdf]
--  psw      - Pocket Word [.psw]
--  rtf      - Rich Text Format [.rtf]
--  latex    - LaTeX 2e [.ltx]
--  sdw      - StarWriter 5.0 [.sdw]
--  sdw4     - StarWriter 4.0 [.sdw]
--  sdw3     - StarWriter 3.0 [.sdw]
--  stw      - Open Office.org 1.0 Text Document Template [.stw]
--  sxw      - Open Office.org 1.0 Text Document [.sxw]
--  text     - Text Encoded [.txt]
--  txt      - Plain Text [.txt]
--  vor      - StarWriter 5.0 Template [.vor]
--  vor4     - StarWriter 4.0 Template [.vor]
--  vor3     - StarWriter 3.0 Template [.vor]
--  xhtml    - XHTML Document [.html]
-
-The following list of graphics formats are currently available for exporting to:
--  bmp      - Windows Bitmap [.bmp]
--  emf      - Enhanced Metafile [.emf]
--  eps      - Encapsulated PostScript [.eps]
--  gif      - Graphics Interchange Format [.gif]
--  html     - HTML Document (OpenOffice.org Draw) [.html]
--  jpg      - Joint Photographic Experts Group [.jpg]
--  met      - OS/2 Metafile [.met]
--  odd      - OpenDocument Drawing [.odd]
--  otg      - OpenDocument Drawing Template [.otg]
--  pbm      - Portable Bitmap [.pbm]
--  pct      - Mac Pict [.pct]
--  pdf      - Portable Document Format [.pdf]
--  pgm      - Portable Graymap [.pgm]
--  png      - Portable Network Graphic [.png]
--  ppm      - Portable Pixelmap [.ppm]
--  ras      - Sun Raster Image [.ras]
--  std      - OpenOffice.org 1.0 Drawing Template [.std]
--  svg      - Scalable Vector Graphics [.svg]
--  svm      - StarView Metafile [.svm]
--  swf      - Macromedia Flash (SWF) [.swf]
--  sxd      - OpenOffice.org 1.0 Drawing [.sxd]
--  sxd3     - StarDraw 3.0 [.sxd]
--  sxd5     - StarDraw 5.0 [.sxd]
--  tiff     - Tagged Image File Format [.tiff]
--  vor      - StarDraw 5.0 Template [.vor]
--  vor3     - StarDraw 3.0 Template [.vor]
--  wmf      - Windows Metafile [.wmf]
--  xhtml    - XHTML [.xhtml]
--  xpm      - X PixMap [.xpm]
-
-The following list of presentation formats are currently available for exporting to:
--  bmp      - Windows Bitmap [.bmp]
--  emf      - Enhanced Metafile [.emf]
--  eps      - Encapsulated PostScript [.eps]
--  gif      - Graphics Interchange Format [.gif]
--  html     - HTML Document (OpenOffice.org Impress) [.html]
--  jpg      - Joint Photographic Experts Group [.jpg]
--  met      - OS/2 Metafile [.met]
--  odd      - OpenDocument Drawing (Impress) [.odd]
--  odg      - OpenOffice.org 1.0 Drawing (OpenOffice.org Impress) [.odg]
--  odp      - OpenDocument Presentation [.odp]
--  pbm      - Portable Bitmap [.pbm]
--  pct      - Mac Pict [.pct]
--  pdf      - Portable Document Format [.pdf]
--  pgm      - Portable Graymap [.pgm]
--  png      - Portable Network Graphic [.png]
--  pot      - Microsoft PowerPoint 97/2000/XP Template [.pot]
--  ppm      - Portable Pixelmap [.ppm]
--  ppt      - Microsoft PowerPoint 97/2000/XP [.ppt]
--  pwp      - PlaceWare [.pwp]
--  ras      - Sun Raster Image [.ras]
--  sda      - StarDraw 5.0 (OpenOffice.org Impress) [.sda]
--  sdd      - StarImpress 5.0 [.sdd]
--  sdd3     - StarDraw 3.0 (OpenOffice.org Impress) [.sdd]
--  sdd4     - StarImpress 4.0 [.sdd]
--  sti      - OpenOffice.org 1.0 Presentation Template [.sti]
--  stp      - OpenDocument Presentation Template [.stp]
--  svg      - Scalable Vector Graphics [.svg]
--  svm      - StarView Metafile [.svm]
--  swf      - Macromedia Flash (SWF) [.swf]
--  sxi      - OpenOffice.org 1.0 Presentation [.sxi]
--  tiff     - Tagged Image File Format [.tiff]
--  vor      - StarImpress 5.0 Template [.vor]
--  vor3     - StarDraw 3.0 Template (OpenOffice.org Impress) [.vor]
--  vor4     - StarImpress 4.0 Template [.vor]
--  vor5     - StarDraw 5.0 Template (OpenOffice.org Impress) [.vor]
--  wmf      - Windows Metafile [.wmf]
--  xhtml    - XHTML [.xml]
--  xpm      - X PixMap [.xpm]
-
-The following list of spreadsheet formats are currently available for exporting to:
--  csv      - Text CSV [.csv]
--  dbf      - dBase [.dbf]
--  dif      - Data Interchange Format [.dif]
--  html     - HTML Document (OpenOffice.org Calc) [.html]
--  ods      - Open Document Spreadsheet [.ods]
--  ooxml    - Microsoft Excel 2003 XML [.xml]
--  pdf      - Portable Document Format [.pdf]
--  pts      - OpenDocument Spreadsheet Template [.pts]
--  pxl      - Pocket Excel [.pxl]
--  sdc      - StarCalc 5.0 [.sdc]
--  sdc4     - StarCalc 4.0 [.sdc]
--  sdc3     - StarCalc 3.0 [.sdc]
--  slk      - SYLK [.slk]
--  stc      - OpenOffice.org 1.0 Spreadsheet Template [.stc]
--  sxc      - OpenOffice.org 1.0 Spreadsheet [.sxc]
--  vor3     - StarCalc 3.0 Template [.vor]
--  vor4     - StarCalc 4.0 Template [.vor]
--  vor      - StarCalc 5.0 Template [.vor]
--  xhtml    - XHTML [.xhtml]
--  xls      - Microsoft Excel 97/2000/XP [.xls]
--  xls5     - Microsoft Excel 5.0 [.xls]
--  xls95    - Microsoft Excel 95 [.xls]
--  xlt      - Microsoft Excel 97/2000/XP Template [.xlt]
--  xlt5     - Microsoft Excel 5.0 Template [.xlt]
--  xlt95    - Microsoft Excel 95 Template [.xlt]
-
-The following list of open office formats are currently available for exporting to:
-
-- Microsoft Word 6.0/95/97/2000/XP (.doc and .dot)
-- Microsoft Word 2003 XML (.xml)
-- Microsoft Word 2007 XML (.docx, .docm, .dotx, .dotm)
-- Microsoft WinWord 5 (.doc)
-- WordPerfect Document (.wpd)
-- WPS 2000/Office 1.0 (.wps)
-- .rtf, .txt, and .csv
-- StarWriter formats (.sdw, .sgl, .vor)
-- DocBook (.xml)
-- Unified Office Format text (.uot, .uof)
-- Ichitaro 8/9/10/11 (.jtd and .jtt)
-- Hangul WP 97 (.hwp)
-- T602 Document (.602, .txt)
-- AportisDoc (Palm) (.pdb)
-- Pocket Word (.psw)
-- Microsoft Excel 97/2000/XP (.xls, .xlw, and .xlt)
-- Microsoft Excel 4.x–5.0/95 (.xls, .xlw, and .xlt)
-- Microsoft Excel 2003 XML (.xml)
-- Microsoft Excel 2007 XML (.xlsx, .xlsm, .xltx, .xltm)
-- Microsoft Excel 2007 binary (.xlsb)
-- Lotus 1-2-3 (.wk1, .wks, and .123)
-- Data Interchange Format (.dif)
-- Rich Text Format (.rtf)
-- Text CSV (.csv and .txt)
-- StarCalc formats (.sdc and .vor)
-- dBASE (.dbf)
-- SYLK (.slk)
-- Unified Office Format spreadsheet (.uos, .uof)
-- .htm and .html files, including Web page queries
-- Pocket Excel (pxl)
-- Quattro Pro 6.0 (.wb2)
-- Microsoft PowerPoint 97/2000/XP (.ppt, .pps, and .pot)
-- Microsoft PowerPoint 2007 (.pptx, .pptm, .potx, .potm)
-- StarDraw and StarImpress (.sda, .sdd, .sdp, and .vor)
-- Unified Office Format presentation (.uop, .uof)
-- CGM – Computer Graphics Metafile (.cgm)
-- Portable Document Format (.pdf)
-
-The following list of video formats are currently available for exporting to:
-- 3g2             3GP2 (3GPP2 file format)
-- 3gp             3GP (3GPP file format)
-- 4xm             4X Technologies
-- a64             a64 - video for Commodore 64
-- aac             raw ADTS AAC (Advanced Audio Coding)
-- ac3             raw AC-3
-- act             ACT Voice file format
-- adf             Artworx Data Format
-- adp             ADP
-- adts            ADTS AAC (Advanced Audio Coding)
-- adx             CRI ADX
-- aea             MD STUDIO audio
-- afc             AFC
-- aiff            Audio IFF
-- alaw            PCM A-law
-- alias_pix       Alias/Wavefront PIX image
-- alsa            ALSA audio output
-- amr             3GPP AMR
-- anm             Deluxe Paint Animation
-- apc             CRYO APC
-- ape             Monkey's Audio
-- apng            Animated Portable Network Graphics
-- aqtitle         AQTitle subtitles
-- asf             ASF (Advanced / Active Streaming Format)
-- asf_stream      ASF (Advanced / Active Streaming Format)
-- ass             SSA (SubStation Alpha) subtitle
-- ast             AST (Audio Stream)
-- au              Sun AU
-- avi             AVI (Audio Video Interleaved)
-- avisynth        AviSynth script
-- avm2            SWF (ShockWave Flash) (AVM2)
-- avr             AVR (Audio Visual Research)
-- avs             AVS
-- bethsoftvid     Bethesda Softworks VID
-- bfi             Brute Force & Ignorance
-- bin             Binary text
-- bink            Bink
-- bit             G.729 BIT file format
-- bmp_pipe        piped bmp sequence
-- bmv             Discworld II BMV
-- boa             Black Ops Audio
-- brender_pix     BRender PIX image
-- brstm           BRSTM (Binary Revolution Stream)
-- c93             Interplay C93
-- caca            caca (color ASCII art) output device
-- caf             Apple CAF (Core Audio Format)
-- cavsvideo       raw Chinese AVS (Audio Video Standard) video
-- cdg             CD Graphics
-- cdxl            Commodore CDXL video
-- cine            Phantom Cine
-- concat          Virtual concatenation script
-- crc             CRC testing
-- dash            DASH Muxer
-- data            raw data
-- daud            D-Cinema audio
-- dfa             Chronomaster DFA
-- dirac           raw Dirac
-- dnxhd           raw DNxHD (SMPTE VC-3)
-- dpx_pipe        piped dpx sequence
-- dsf             DSD Stream File (DSF)
-- dsicin          Delphine Software International CIN
-- dss             Digital Speech Standard (DSS)
-- dts             raw DTS
-- dtshd           raw DTS-HD
-- dv              DV (Digital Video)
-- dv1394          DV1394 A/V grab
-- dvbsub          raw dvbsub
-- dvd             MPEG-2 PS (DVD VOB)
-- dxa             DXA
-- ea              Electronic Arts Multimedia
-- ea_cdata        Electronic Arts cdata
-- eac3            raw E-AC-3
-- epaf            Ensoniq Paris Audio File
-- exr_pipe        piped exr sequence
-- f32be           PCM 32-bit floating-point big-endian
-- f32le           PCM 32-bit floating-point little-endian
-- f4v             F4V Adobe Flash Video
-- f64be           PCM 64-bit floating-point big-endian
-- f64le           PCM 64-bit floating-point little-endian
-- fbdev           Linux framebuffer
-- ffm             FFM (FFserver live feed)
-- ffmetadata      FFmpeg metadata in text
-- film_cpk        Sega FILM / CPK
-- filmstrip       Adobe Filmstrip
-- flac            raw FLAC
-- flic            FLI/FLC/FLX animation
-- flv             FLV (Flash Video)
-- framecrc        framecrc testing
-- framemd5        Per-frame MD5 testing
-- frm             Megalux Frame
-- g722            raw G.722
-- g723_1          raw G.723.1
-- g729            G.729 raw format demuxer
-- gif             GIF Animation
-- gsm             raw GSM
-- gxf             GXF (General eXchange Format)
-- h261            raw H.261
-- h263            raw H.263
-- h264            raw H.264 video
-- hds             HDS Muxer
-- hevc            raw HEVC video
-- hls             Apple HTTP Live Streaming
-- hls,applehttp   Apple HTTP Live Streaming
-- hnm             Cryo HNM v4
-- ico             Microsoft Windows ICO
-- idcin           id Cinematic
-- idf             iCE Draw File
-- iec61883        libiec61883 (new DV1394) A/V input device
-- iff             IFF (Interchange File Format)
-- ilbc            iLBC storage
-- image2          image2 sequence
-- image2pipe      piped image2 sequence
-- ingenient       raw Ingenient MJPEG
-- ipmovie         Interplay MVE
-- ipod            iPod H.264 MP4 (MPEG-4 Part 14)
-- ircam           Berkeley/IRCAM/CARL Sound Format
-- ismv            ISMV/ISMA (Smooth Streaming)
-- iss             Funcom ISS
-- iv8             IndigoVision 8000 video
-- ivf             On2 IVF
-- j2k_pipe        piped j2k sequence
-- jack            JACK Audio Connection Kit
-- jacosub         JACOsub subtitle format
-- jpeg_pipe       piped jpeg sequence
-- jpegls_pipe     piped jpegls sequence
-- jv              Bitmap Brothers JV
-- latm            LOAS/LATM
-- lavfi           Libavfilter virtual input device
-- libcdio          
-- libdc1394       dc1394 v.2 A/V grab
-- libgme          Game Music Emu demuxer
-- libmodplug      ModPlug demuxer
-- live_flv        live RTMP FLV (Flash Video)
-- lmlm4           raw lmlm4
-- loas            LOAS AudioSyncStream
-- lrc             LRC lyrics
-- lvf             LVF
-- lxf             VR native stream (LXF)
-- m4v             raw MPEG-4 video
-- matroska        Matroska
-- matroska,webm   Matroska / WebM
-- md5             MD5 testing
-- mgsts           Metal Gear Solid: The Twin Snakes
-- microdvd        MicroDVD subtitle format
-- mjpeg           raw MJPEG video
-- mkvtimestamp_v2 extract pts as timecode v2 format, as defined by mkvtoolnix
-- mlp             raw MLP
-- mlv             Magic Lantern Video (MLV)
-- mm              American Laser Games MM
-- mmf             Yamaha SMAF
-- mov             QuickTime / MOV
-- mov,mp4,m4a,3gp,3g2,mj2 QuickTime / MOV
-- mp2             MP2 (MPEG audio layer 2)
-- mp3             MP3 (MPEG audio layer 3)
-- mp4             MP4 (MPEG-4 Part 14)
-- mpc             Musepack
-- mpc8            Musepack SV8
-- mpeg            MPEG-1 Systems / MPEG program stream
-- mpeg1video      raw MPEG-1 video
-- mpeg2video      raw MPEG-2 video
-- mpegts          MPEG-TS (MPEG-2 Transport Stream)
-- mpegtsraw       raw MPEG-TS (MPEG-2 Transport Stream)
-- mpegvideo       raw MPEG video
-- mpjpeg          MIME multipart JPEG
-- mpl2            MPL2 subtitles
-- mpsub           MPlayer subtitles
-- msnwctcp        MSN TCP Webcam stream
-- mtv             MTV
-- mulaw           PCM mu-law
-- mv              Silicon Graphics Movie
-- mvi             Motion Pixels MVI
-- mxf             MXF (Material eXchange Format)
-- mxf_d10         MXF (Material eXchange Format) D-10 Mapping
-- mxf_opatom      MXF (Material eXchange Format) Operational Pattern Atom
-- mxg             MxPEG clip
-- nc              NC camera feed
-- nistsphere      NIST SPeech HEader REsources
-- nsv             Nullsoft Streaming Video
-- nut             NUT
-- nuv             NuppelVideo
-- oga             Ogg Audio
-- ogg             Ogg
-- oma             Sony OpenMG audio
-- openal          OpenAL audio capture device
-- opengl          OpenGL output
-- opus            Ogg Opus
-- oss             OSS (Open Sound System) playback
-- paf             Amazing Studio Packed Animation File
-- pictor_pipe     piped pictor sequence
-- pjs             PJS (Phoenix Japanimation Society) subtitles
-- pmp             Playstation Portable PMP
-- png_pipe        piped png sequence
-- psp             PSP MP4 (MPEG-4 Part 14)
-- psxstr          Sony Playstation STR
-- pulse           Pulse audio output
-- pva             TechnoTrend PVA
-- pvf             PVF (Portable Voice Format)
-- qcp             QCP
-- qdraw_pipe      piped qdraw sequence
-- r3d             REDCODE R3D
-- rawvideo        raw video
-- realtext        RealText subtitle format
-- redspark        RedSpark
-- rl2             RL2
-- rm              RealMedia
-- roq             raw id RoQ
-- rpl             RPL / ARMovie
-- rsd             GameCube RSD
-- rso             Lego Mindstorms RSO
-- rtp             RTP output
-- rtp_mpegts      RTP/mpegts output format
-- rtsp            RTSP output
-- s16be           PCM signed 16-bit big-endian
-- s16le           PCM signed 16-bit little-endian
-- s24be           PCM signed 24-bit big-endian
-- s24le           PCM signed 24-bit little-endian
-- s32be           PCM signed 32-bit big-endian
-- s32le           PCM signed 32-bit little-endian
-- s8              PCM signed 8-bit
-- sami            SAMI subtitle format
-- sap             SAP output
-- sbg             SBaGen binaural beats script
-- sdl             SDL output device
-- sdp             SDP
-- sdr2            SDR2
-- segment         segment
-- sgi_pipe        piped sgi sequence
-- shn             raw Shorten
-- siff            Beam Software SIFF
-- singlejpeg      JPEG single image
-- sln             Asterisk raw pcm
-- smjpeg          Loki SDL MJPEG
-- smk             Smacker
-- smoothstreaming Smooth Streaming Muxer
-- smush           LucasArts Smush
-- sol             Sierra SOL
-- sox             SoX native
-- spdif           IEC 61937 (used on S/PDIF - IEC958)
-- spx             Ogg Speex
-- srt             SubRip subtitle
-- stl             Spruce subtitle format
-- stream_segment,ssegment streaming segment muxer
-- subviewer       SubViewer subtitle format
-- subviewer1      SubViewer v1 subtitle format
-- sunrast_pipe    piped sunrast sequence
-- sup             raw HDMV Presentation Graphic Stream subtitles
-- svcd            MPEG-2 PS (SVCD)
-- swf             SWF (ShockWave Flash)
-- tak             raw TAK
-- tedcaptions     TED Talks captions
-- tee             Multiple muxer tee
-- thp             THP
-- tiertexseq      Tiertex Limited SEQ
-- tiff_pipe       piped tiff sequence
-- tmv             8088flex TMV
-- truehd          raw TrueHD
-- tta             TTA (True Audio)
-- tty             Tele-typewriter
-- txd             Renderware TeXture Dictionary
-- u16be           PCM unsigned 16-bit big-endian
-- u16le           PCM unsigned 16-bit little-endian
-- u24be           PCM unsigned 24-bit big-endian
-- u24le           PCM unsigned 24-bit little-endian
-- u32be           PCM unsigned 32-bit big-endian
-- u32le           PCM unsigned 32-bit little-endian
-- u8              PCM unsigned 8-bit
-- uncodedframecrc uncoded framecrc testing
-- v4l2            Video4Linux2 output device
-- vc1             raw VC-1 video
-- vc1test         VC-1 test bitstream
-- vcd             MPEG-1 Systems / MPEG program stream (VCD)
-- video4linux2,v4l2 Video4Linux2 device grab
-- vivo            Vivo
-- vmd             Sierra VMD
-- vob             MPEG-2 PS (VOB)
-- vobsub          VobSub subtitle format
-- voc             Creative Voice
-- vplayer         VPlayer subtitles
-- vqf             Nippon Telegraph and Telephone Corporation (NTT) TwinVQ
-- w64             Sony Wave64
-- wav             WAV / WAVE (Waveform Audio)
-- wc3movie        Wing Commander III movie
-- webm            WebM
-- webm_chunk      WebM Chunk Muxer
-- webm_dash_manifest WebM DASH Manifest
-- webp            WebP
-- webp_pipe       piped webp sequence
-- webvtt          WebVTT subtitle
-- wsaud           Westwood Studios audio
-- wsvqa           Westwood Studios VQA
-- wtv             Windows Television (WTV)
-- wv              raw WavPack
-- x11grab         X11 screen capture, using XCB
-- xa              Maxis XA
-- xbin            eXtended BINary text (XBIN)
-- xmv             Microsoft XMV
-- xv              XV (XVideo) output device
-- xwma            Microsoft xWMA
-- yop             Psygnosis YOP
-- yuv4mpegpipe    YUV4MPEG pipe
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
 ## License
 
-filepreview is released under the new BSD license.
+This project is licensed under the BSD-4-Clause License - see the LICENSE file for details.
+
+## Support
+
+For issues and questions:
+- Create an issue on GitHub
+- Check the troubleshooting section
+- Review system dependencies
+
+---
+
+**Note**: This service requires system dependencies (unoconv, ffmpeg, imagemagick) to be installed on the host system or container.
