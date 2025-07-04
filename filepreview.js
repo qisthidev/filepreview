@@ -276,5 +276,161 @@ module.exports = {
         return false;
       }
     }
+  },
+
+  convertDocxToDoc: function(input_original, output, callback) {
+    var input = input_original;
+
+    if (typeof callback !== 'function') {
+      throw new Error('Callback function is required');
+    }
+
+    // Check for supported input and output formats
+    var extOutput = path.extname(output).toLowerCase().replace('.','');
+    var extInput = path.extname(input).toLowerCase().replace('.','');
+
+    if (extInput !== 'docx') {
+      return callback(new Error('Input file must be a DOCX file'));
+    }
+
+    if (extOutput !== 'doc') {
+      return callback(new Error('Output file must have .doc extension'));
+    }
+
+    // Handle remote files
+    if (input_original.indexOf("http://") == 0 || input_original.indexOf("https://") == 0) {
+      var url = input.split("/");
+      var url_filename = url[url.length - 1];
+      var hash = crypto.createHash('sha512');
+      hash.update(Math.random().toString());
+      hash = hash.digest('hex');
+      var temp_input = path.join(os.tmpdir(), hash + url_filename);
+      curlArgs = ['--silent', '-L', input, '-o', temp_input];
+      
+      try {
+        child_process.execFileSync("curl", curlArgs);
+        input = temp_input;
+      } catch (error) {
+        return callback(new Error('Failed to download remote file: ' + error.message));
+      }
+    }
+
+    // Verify input file exists
+    fs.lstat(input, function(error, stats) {
+      if (error) return callback(new Error('Input file not found: ' + error.message));
+      if (!stats.isFile()) {
+        return callback(new Error('Input path is not a file'));
+      }
+
+      // Convert DOCX to DOC using unoconv
+      var unoconvArgs = ['-f', 'doc', '-o', output, input];
+      
+      child_process.execFile('unoconv', unoconvArgs, function(error, stdout, stderr) {
+        // Clean up temporary file if it was downloaded
+        if (input_original.indexOf("http://") == 0 || input_original.indexOf("https://") == 0) {
+          try {
+            fs.unlinkSync(input);
+          } catch (unlinkError) {
+            // Ignore cleanup errors
+          }
+        }
+
+        if (error) {
+          return callback(new Error('DOCX to DOC conversion failed: ' + (stderr || error.message)));
+        }
+
+        // Verify output file was created
+        fs.access(output, fs.constants.F_OK, function(accessError) {
+          if (accessError) {
+            return callback(new Error('Output file was not created'));
+          }
+          return callback(null, output);
+        });
+      });
+    });
+  },
+
+  convertDocxToDocSync: function(input_original, output) {
+    var input = input_original;
+
+    // Check for supported input and output formats
+    var extOutput = path.extname(output).toLowerCase().replace('.','');
+    var extInput = path.extname(input).toLowerCase().replace('.','');
+
+    if (extInput !== 'docx') {
+      throw new Error('Input file must be a DOCX file');
+    }
+
+    if (extOutput !== 'doc') {
+      throw new Error('Output file must have .doc extension');
+    }
+
+    // Handle remote files
+    if (input_original.indexOf("http://") == 0 || input_original.indexOf("https://") == 0) {
+      var url = input.split("/");
+      var url_filename = url[url.length - 1];
+      var hash = crypto.createHash('sha512');
+      hash.update(Math.random().toString());
+      hash = hash.digest('hex');
+      var temp_input = path.join(os.tmpdir(), hash + url_filename);
+      curlArgs = ['--silent', '-L', input, '-o', temp_input];
+      
+      try {
+        child_process.execFileSync("curl", curlArgs);
+        input = temp_input;
+      } catch (error) {
+        throw new Error('Failed to download remote file: ' + error.message);
+      }
+    }
+
+    try {
+      // Verify input file exists
+      var stats = fs.lstatSync(input);
+      if (!stats.isFile()) {
+        throw new Error('Input path is not a file');
+      }
+
+      // Convert DOCX to DOC using unoconv
+      var unoconvArgs = ['-f', 'doc', '-o', output, input];
+      child_process.execFileSync('unoconv', unoconvArgs);
+
+      // Clean up temporary file if it was downloaded
+      if (input_original.indexOf("http://") == 0 || input_original.indexOf("https://") == 0) {
+        try {
+          fs.unlinkSync(input);
+        } catch (unlinkError) {
+          // Ignore cleanup errors
+        }
+      }
+
+      // Verify output file was created
+      try {
+        fs.accessSync(output, fs.constants.F_OK);
+        return output;
+      } catch (accessError) {
+        throw new Error('Output file was not created');
+      }
+
+    } catch (error) {
+      // Clean up temporary file if it was downloaded
+      if (input_original.indexOf("http://") == 0 || input_original.indexOf("https://") == 0) {
+        try {
+          fs.unlinkSync(input);
+        } catch (unlinkError) {
+          // Ignore cleanup errors
+        }
+      }
+      
+      if (error.message.includes('Input file not found') || 
+          error.message.includes('Input path is not a file') ||
+          error.message.includes('Input file must be') ||
+          error.message.includes('Output file must have') ||
+          error.message.includes('Failed to download') ||
+          error.message.includes('Output file was not created')) {
+        throw error;
+      } else {
+        throw new Error('DOCX to DOC conversion failed: ' + error.message);
+      }
+    }
   }
 };

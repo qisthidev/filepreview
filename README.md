@@ -107,6 +107,45 @@ $ unoconv --listener
 $ node script_with_file_preview_generations.js
 ```
 
+## DOCX to DOC Conversion
+
+filepreview also provides a specific feature to convert DOCX files to DOC format using unoconv.
+
+Asynchronous with callback:
+
+```javascript
+var filepreview = require('filepreview');
+
+filepreview.convertDocxToDoc('/home/myfile.docx', '/home/myfile.doc', function(error, outputPath) {
+  if (error) {
+    return console.log('Conversion failed:', error.message);
+  }
+  console.log('File converted successfully to:', outputPath);
+});
+```
+
+Synchronous (throws error if conversion fails):
+
+```javascript
+var filepreview = require('filepreview');
+
+try {
+  var outputPath = filepreview.convertDocxToDocSync('/home/myfile.docx', '/home/myfile.doc');
+  console.log('File converted successfully to:', outputPath);
+} catch (error) {
+  console.log('Conversion failed:', error.message);
+}
+```
+
+The conversion functions support both local files and remote URLs (http/https). Remote files will be automatically downloaded before conversion.
+
+Features:
+- Validates input file is DOCX format
+- Validates output file has .doc extension
+- Supports remote file URLs with automatic download
+- Proper error handling and cleanup
+- Returns output file path on success
+
 ## Document formats
 
 The following list of document formats are currently available for exporting to:
