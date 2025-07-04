@@ -576,6 +576,22 @@ The following list of video formats are currently available for exporting to:
 - yop             Psygnosis YOP
 - yuv4mpegpipe    YUV4MPEG pipe
 
+## Support This Project
+
+If you find this project useful, please consider supporting its development! Your support helps maintain and improve this open source tool.
+
+### Ways to Support:
+- ⭐ **Star this repository** on GitHub
+- 💰 **[Sponsor on GitHub](https://github.com/sponsors/maxlabelle)** - Monthly or one-time contributions
+- ☕ **[Buy me a coffee](https://www.buymeacoffee.com/maxlabelle)** - One-time donations
+- 💼 **[Hire me for consulting](mailto:Maxime.Labelle@owasp.org)** - Custom development and support
+- 📢 **Share this project** with others who might find it useful
+- 🐛 **Report bugs** and contribute code improvements
+
+Your support enables continued development and helps keep this project free and open source for everyone!
+
 ## License
 
-filepreview is released under the new BSD license.
+filepreview is released under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+This project is free and open source. You are free to use, modify, and distribute it as you wish.

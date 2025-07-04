@@ -21,7 +21,7 @@
     "document"
   ],
   "author": "Maxime Labelle <Maxime.Labelle@owasp.org> (https://github.com/maxlabelle/filepreview)",
-  "license": "BSD-4-Clause",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/maxlabelle/filepreview/issues"
   },
