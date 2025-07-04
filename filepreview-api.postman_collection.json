@@ -1,0 +1,500 @@
+{
+  "info": {
+    "name": "FilePreview API",
+    "description": "API collection for FilePreview service - a file preview generator for images, videos, and documents",
+    "version": "1.0.14",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "File Preview Generation",
+      "item": [
+        {
+          "name": "Generate Preview (Async)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": \"/path/to/input/file.mp4\",\n  \"output\": \"/path/to/output/preview.jpg\",\n  \"options\": {\n    \"width\": 300,\n    \"height\": 200,\n    \"quality\": 85,\n    \"previewTime\": \"00:00:05\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/preview/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "preview", "generate"]
+            },
+            "description": "Generate a file preview asynchronously. Supports images, videos, and documents."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"input\": \"/path/to/input/file.mp4\",\n  \"output\": \"/path/to/output/preview.jpg\",\n  \"options\": {\n    \"width\": 300,\n    \"height\": 200,\n    \"quality\": 85,\n    \"previewTime\": \"00:00:05\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/preview/generate",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "preview", "generate"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Preview generated successfully\",\n  \"output\": \"/path/to/output/preview.jpg\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Generate Preview (Sync)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": \"/path/to/input/document.pdf\",\n  \"output\": \"/path/to/output/preview.png\",\n  \"options\": {\n    \"width\": 400,\n    \"height\": 300,\n    \"quality\": 90\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/preview/generate-sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "preview", "generate-sync"]
+            },
+            "description": "Generate a file preview synchronously. Returns result immediately."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"input\": \"/path/to/input/document.pdf\",\n  \"output\": \"/path/to/output/preview.png\",\n  \"options\": {\n    \"width\": 400,\n    \"height\": 300,\n    \"quality\": 90\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/preview/generate-sync",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "preview", "generate-sync"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Preview generated successfully\",\n  \"output\": \"/path/to/output/preview.png\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Generate Preview from URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": \"https://example.com/sample-video.mp4\",\n  \"output\": \"/path/to/output/url-preview.jpg\",\n  \"options\": {\n    \"width\": 500,\n    \"height\": 300,\n    \"previewTime\": \"00:01:30\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/preview/generate-from-url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "preview", "generate-from-url"]
+            },
+            "description": "Generate a file preview from a remote URL. Supports HTTP and HTTPS URLs."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"input\": \"https://example.com/sample-video.mp4\",\n  \"output\": \"/path/to/output/url-preview.jpg\",\n  \"options\": {\n    \"width\": 500,\n    \"height\": 300,\n    \"previewTime\": \"00:01:30\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/preview/generate-from-url",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "preview", "generate-from-url"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Preview generated successfully from URL\",\n  \"output\": \"/path/to/output/url-preview.jpg\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "File Upload & Preview",
+      "item": [
+        {
+          "name": "Upload File and Generate Preview",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "width",
+                  "value": "300",
+                  "type": "text"
+                },
+                {
+                  "key": "height",
+                  "value": "200",
+                  "type": "text"
+                },
+                {
+                  "key": "quality",
+                  "value": "85",
+                  "type": "text"
+                },
+                {
+                  "key": "previewTime",
+                  "value": "00:00:10",
+                  "type": "text",
+                  "description": "For video files - timestamp for preview frame"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/upload-and-preview",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "upload-and-preview"]
+            },
+            "description": "Upload a file and generate its preview in one request"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": []
+                    },
+                    {
+                      "key": "width",
+                      "value": "300",
+                      "type": "text"
+                    },
+                    {
+                      "key": "height",
+                      "value": "200",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/upload-and-preview",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "upload-and-preview"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"File uploaded and preview generated\",\n  \"originalFile\": \"/uploads/original-file.mp4\",\n  \"previewFile\": \"/uploads/previews/preview.jpg\",\n  \"previewUrl\": \"{{baseUrl}}/api/preview/view/preview.jpg\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Utility Endpoints",
+      "item": [
+        {
+          "name": "Get Supported File Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/supported-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "supported-types"]
+            },
+            "description": "Get list of supported input file types and output formats"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/supported-types",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "supported-types"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"inputTypes\": {\n    \"images\": [\"jpg\", \"jpeg\", \"png\", \"gif\", \"bmp\", \"tiff\", \"pdf\"],\n    \"videos\": [\"mp4\", \"avi\", \"mov\", \"wmv\", \"flv\", \"webm\"],\n    \"documents\": [\"pdf\", \"doc\", \"docx\", \"ppt\", \"pptx\", \"xls\", \"xlsx\"]\n  },\n  \"outputFormats\": [\"jpg\", \"png\", \"gif\"]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Check if the API service is running and dependencies are available"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"OK\",\n  \"version\": \"1.0.14\",\n  \"dependencies\": {\n    \"ffmpeg\": \"available\",\n    \"imagemagick\": \"available\",\n    \"unoconv\": \"available\"\n  },\n  \"timestamp\": \"2024-01-15T10:30:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "View Generated Preview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preview/view/:filename",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "preview", "view", ":filename"],
+              "variable": [
+                {
+                  "key": "filename",
+                  "value": "preview.jpg"
+                }
+              ]
+            },
+            "description": "View or download a generated preview file"
+          },
+          "response": [
+            {
+              "name": "Success Response - Image",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/preview/view/preview.jpg",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "preview", "view", "preview.jpg"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "binary",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "image/jpeg"
+                },
+                {
+                  "key": "Content-Disposition",
+                  "value": "inline; filename=\"preview.jpg\""
+                }
+              ],
+              "body": "[Binary image data]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Batch Operations",
+      "item": [
+        {
+          "name": "Batch Generate Previews",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"files\": [\n    {\n      \"input\": \"/path/to/file1.mp4\",\n      \"output\": \"/path/to/preview1.jpg\",\n      \"options\": {\n        \"width\": 300,\n        \"height\": 200,\n        \"previewTime\": \"00:00:05\"\n      }\n    },\n    {\n      \"input\": \"/path/to/file2.pdf\",\n      \"output\": \"/path/to/preview2.png\",\n      \"options\": {\n        \"width\": 400,\n        \"height\": 300,\n        \"quality\": 90\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/preview/batch-generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "preview", "batch-generate"]
+            },
+            "description": "Generate previews for multiple files in a single request"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"files\": [\n    {\n      \"input\": \"/path/to/file1.mp4\",\n      \"output\": \"/path/to/preview1.jpg\",\n      \"options\": {\n        \"width\": 300,\n        \"height\": 200,\n        \"previewTime\": \"00:00:05\"\n      }\n    },\n    {\n      \"input\": \"/path/to/file2.pdf\",\n      \"output\": \"/path/to/preview2.png\",\n      \"options\": {\n        \"width\": 400,\n        \"height\": 300,\n        \"quality\": 90\n      }\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/preview/batch-generate",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "preview", "batch-generate"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Batch preview generation completed\",\n  \"results\": [\n    {\n      \"input\": \"/path/to/file1.mp4\",\n      \"output\": \"/path/to/preview1.jpg\",\n      \"status\": \"success\"\n    },\n    {\n      \"input\": \"/path/to/file2.pdf\",\n      \"output\": \"/path/to/preview2.png\",\n      \"status\": \"success\"\n    }\n  ],\n  \"totalFiles\": 2,\n  \"successCount\": 2,\n  \"failureCount\": 0\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set timestamp for requests",
+          "pm.globals.set('timestamp', new Date().toISOString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Basic response validation",
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202]);",
+          "});",
+          "",
+          "pm.test('Response time is less than 30 seconds', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(30000);",
+          "});",
+          "",
+          "if (pm.response.headers.get('Content-Type')?.includes('application/json')) {",
+          "    pm.test('Response is valid JSON', function () {",
+          "        pm.response.to.have.jsonBody();",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}
